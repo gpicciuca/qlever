@@ -39,7 +39,7 @@ Convenience header for Nlohmann::Json that sets the default options. Also
 // For higher flexibility of the custom json helper functions.
 // TODO<joka921, gpicciuca> Make `CPP_concept` again.
 template <typename T>
-concept OrderedOrUnorderedJson =
+CPP_concept OrderedOrUnorderedJson =
     ad_utility::SameAsAny<T, nlohmann::json, nlohmann::ordered_json>;
 
 /*
