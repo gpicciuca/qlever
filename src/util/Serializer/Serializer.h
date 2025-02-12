@@ -266,40 +266,19 @@ struct TrivialSerializationHelperTag {};
  * };
  * void allowTrivialSerialization(std::same_as<Z> auto, auto);
  */
-#ifdef QLEVER_CPP_17
-template <typename T, typename Tag, typename = void>
-struct HasAllowTrivialSerialization : std::false_type {};
-
-template <typename T, typename Tag>
-struct HasAllowTrivialSerialization<
-    T, Tag,
-    std::enable_if_t<
-        !std::is_same_v<decltype(allowTrivialSerialization(
-                            std::declval<T>(), std::declval<Tag>())),
-                        void>>> : std::true_type {};
-
-template <typename T, typename = void>
-struct IsTriviallySerializable : std::false_type {};
+template <typename T>
+CPP_requires(
+    is_trivially_serializable_,
+    requires(T t, TrivialSerializationHelperTag tag)(
+        // The `TrivialSerializationHelperTag` lets the argument-dependent
+        // lookup also find the `allowTrivialSerialization` function if it is
+        // defined in the `ad::serialization` namespace.
+        allowTrivialSerialization(t, tag)));
 
 template <typename T>
-struct IsTriviallySerializable<
-    T, std::enable_if_t<HasAllowTrivialSerialization<
-                            T, TrivialSerializationHelperTag>::value &&
-                        std::is_trivially_copyable_v<std::decay_t<T>>>>
-    : std::true_type {};
-
-template <typename T>
-CPP_concept TriviallySerializable = IsTriviallySerializable<T>::value;
-#else
-template <typename T>
-concept TriviallySerializable =
-    requires(T t, TrivialSerializationHelperTag tag) {
-      // The `TrivialSerializationHelperTag` lets the argument-dependent lookup
-      // also find the `allowTrivialSerialization` function if it is defined in
-      // the `ad::serialization` namespace.
-      allowTrivialSerialization(t, tag);
-    } && std::is_trivially_copyable_v<std::decay_t<T>>;
-#endif
+CPP_concept TriviallySerializable =
+    CPP_requires_ref(is_trivially_serializable_, T) &&
+    std::is_trivially_copyable_v<std::decay_t<T>>;
 
 /// Serialize function for `TriviallySerializable` types that works by simply
 /// serializing the binary object representation.
